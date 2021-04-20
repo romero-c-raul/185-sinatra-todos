@@ -23,9 +23,30 @@ class DatabasePersistence
     sql = "SELECT * FROM lists"
     result = query(sql)
 
-    result.map do |tuple|
+    lists = result.map do |tuple|
       {id: tuple["id"], name: tuple["name"], todos: []}
     end
+
+    sql = "SELECT * FROM todos"
+    result = query(sql)
+
+    todos = result.map do |tuple|
+      { id: tuple["id"], 
+        name: tuple["name"], 
+        completed: tuple["completed"], 
+        list_id: tuple["list_id"] 
+      }
+    end
+
+    lists.each do |list|
+      todos.each do |todo|
+        if list[:id] == todo[:list_id]
+          list[:todos] << todo
+        end
+      end
+    end
+
+    lists
   end
 
   def create_new_list(list_name)
