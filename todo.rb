@@ -73,8 +73,16 @@ def error_for_todo(name)
   end
 end
 
+def disconnect
+  @db.close
+end
+
 before do
   @storage = DatabasePersistence.new(logger)
+end
+
+after do
+  @storage.disconnect
 end
 
 get "/" do
