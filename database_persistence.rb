@@ -1,4 +1,5 @@
 require "pg"
+require "pry"
 
 class DatabasePersistence
   def initialize(logger)
@@ -16,37 +17,20 @@ class DatabasePersistence
     result = query(sql, id)
 
     tuple = result.first
-    {id: tuple["id"], name: tuple["name"], todos: []}
+    list_id = tuple["id"]
+    todos = find_todos_for_list(list_id)
+    {id: list_id, name: tuple["name"], todos: todos}
   end
 
   def all_lists
     sql = "SELECT * FROM lists"
     result = query(sql)
 
-    lists = result.map do |tuple|
-      {id: tuple["id"], name: tuple["name"], todos: []}
+    result.map do |tuple|
+      list_id = tuple["id"].to_i
+      todos = find_todos_for_list(list_id)
+      {id: list_id, name: tuple["name"], todos: todos}
     end
-
-    sql = "SELECT * FROM todos"
-    result = query(sql)
-
-    todos = result.map do |tuple|
-      { id: tuple["id"], 
-        name: tuple["name"], 
-        completed: tuple["completed"], 
-        list_id: tuple["list_id"] 
-      }
-    end
-
-    lists.each do |list|
-      todos.each do |todo|
-        if list[:id] == todo[:list_id]
-          list[:todos] << todo
-        end
-      end
-    end
-
-    lists
   end
 
   def create_new_list(list_name)
@@ -86,5 +70,18 @@ class DatabasePersistence
     # list[:todos].each do |todo|
     #   todo[:completed] = true
     # end
+  end
+
+  private
+
+  def find_todos_for_list(list_id)
+    todo_sql = "SELECT * FROM todos WHERE list_id = $1"
+    todos_result = query(todo_sql, list_id)
+
+    todos = todos_result.map do |todo_tuple|
+      { id: todo_tuple["id"].to_i,
+        name: todo_tuple["name"], 
+        completed: todo_tuple["completed"] == "t" }
+    end
   end
 end
