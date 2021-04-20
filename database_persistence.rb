@@ -70,6 +70,10 @@ class DatabasePersistence
     sql = "UPDATE todos SET completed = true WHERE list_id = $1"
     query(sql, list_id)
   end
+  
+  def disconnect
+    @db.close
+  end
 
   private
 
